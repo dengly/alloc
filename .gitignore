@@ -10,6 +10,7 @@
 .idea/
 
 /target/
+/logs/
 
 
 # Mobile Tools for Java (J2ME)
