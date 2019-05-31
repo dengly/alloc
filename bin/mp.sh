@@ -76,7 +76,9 @@ else
     MP_MAIN=""
 fi
 
-MP_MAIN="$MP_MAIN -jar $MP_BIN_DIR/bootstrap.jar"
+# MP_MAIN="$MP_MAIN -jar $MP_BIN_DIR/bootstrap.jar"
+# MP_MAIN="$MP_MAIN com.shinemo.mpush.alloc.Main"
+MP_MAIN="$MP_MAIN -jar $MP_BIN_DIR/bootstrap.jar com.shinemo.mpush.alloc.Main"
 
 if [ "x$SERVER_JVM_FLAGS"  != "x" ]
 then

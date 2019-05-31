@@ -78,6 +78,11 @@ fi
 CLASSPATH="$MP_CFG_DIR:$CLASSPATH"
 
 #make it work in the binary package
+LIB_PATH=""
+for i in "${MPUSH_PREFIX}"/lib/*.jar
+do
+    LIB_PATH="$i:$LIB_PATH"
+done
 #(use array for LIB_PATH to account for spaces within wildcard expansion)
 if [ -e "${MPUSH_PREFIX}"/../lib/plugins/*.jar ]; then
   LIB_PATH=("${MPUSH_PREFIX}"/../lib/plugins/*.jar)

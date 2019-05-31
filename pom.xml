@@ -109,6 +109,9 @@
         </profile>
         <profile>
             <id>zip</id>
+            <properties>
+                <deploy.env>pub</deploy.env>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

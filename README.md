@@ -21,4 +21,13 @@ mpush allocator demo
 
 ### 其他
 
+## 独立部署
+1. 打包 `mvn clean package -Pzip`
+2. 打好的包位置： `target/alloc-release-版本号.tar.gz`
+3. 解压 `tar -zvxf alloc-release-版本号.tar.gz`
+4. `cd mpush-alloc-版本号`
+5. `vim conf/mpush.conf`
+6. `chmod +x bin/*.sh`
+7. `bin/mp.sh start`
+
 
