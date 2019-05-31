@@ -121,14 +121,14 @@ import java.util.concurrent.atomic.AtomicInteger;
     }
 
     public static final class NotificationDO {
-        public String msgId;
-        public String title;
-        public String content;
+        public String msgId; // 推送消息id
+        public String title; // 标题 必填
+        public String content; // 内容 必填
         public Integer nid; //主要用于聚合通知，非必填
         public Byte flags; //特性字段。 0x01:声音  0x02:震动  0x03:闪灯
         public String largeIcon; // 大图标
         public String ticker; //和title一样
         public Integer number;
-        public Map<String, String> extras;
+        public Map<String, String> extras; // 扩展
     }
 }
