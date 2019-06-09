@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 /**
  * Created by ohun on 16/9/22.
  *
+ * Alloc处理器
+ *
  * @author ohun@live.cn (夜色)
  */
 /*package*/ final class AllocHandler implements HttpHandler {
@@ -108,6 +110,11 @@ import java.util.stream.Collectors;
         }
     }
 
+    /**
+     * 获取在线用户数
+     * @param publicIP
+     * @return
+     */
     private long getOnlineUserNum(String publicIP) {
         return userManager.getOnlineUserNum(publicIP);
     }

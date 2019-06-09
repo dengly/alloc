@@ -30,6 +30,8 @@ import java.nio.charset.StandardCharsets;
 /**
  * Created by ohun on 2016/12/5.
  *
+ * index 页面处理器
+ *
  * @author ohun@live.cn (夜色)
  */
 public final class IndexPageHandler implements HttpHandler {

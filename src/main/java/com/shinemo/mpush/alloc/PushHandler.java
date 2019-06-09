@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by ohun on 16/9/7.
  *
+ * 推送处理器
+ *
  * @author ohun@live.cn (夜色)
  */
 /*package*/ final class PushHandler implements HttpHandler {

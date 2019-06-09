@@ -33,6 +33,8 @@ import java.util.concurrent.Executors;
 /**
  * Created by yxx on 2016/5/6.
  *
+ * Alloc服务器
+ *
  * @author ohun@live.cn
  */
 public final class AllocServer extends BaseService {
