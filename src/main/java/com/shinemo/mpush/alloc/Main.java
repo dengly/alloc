@@ -19,9 +19,9 @@
 
 package com.shinemo.mpush.alloc;
 
+import com.mpush.api.utils.SnowflakeIdWorker;
 import com.mpush.tools.log.Logs;
-
-import java.io.IOException;
+import com.mpush.tools.config.CC.mp.snowflake;
 
 /**
  * Created by ohun on 16/9/7.
@@ -32,6 +32,8 @@ public final class Main {
 
     public static void main(String[] args) {
         Logs.init();
+        SnowflakeIdWorker.setWorkerId(snowflake.workerId);
+        SnowflakeIdWorker.setDatacenterId(snowflake.datacenterId);
         Logs.Console.info("launch alloc server...");
         AllocServer server = new AllocServer();
         server.start();

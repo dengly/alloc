@@ -21,6 +21,7 @@ package com.shinemo.mpush.alloc;
 
 import com.mpush.api.Constants;
 import com.mpush.api.push.*;
+import com.mpush.api.utils.SetUtil;
 import com.mpush.tools.Jsons;
 import com.mpush.tools.common.Strings;
 import com.sun.net.httpserver.HttpExchange;
@@ -32,8 +33,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
 
 
 /**
@@ -46,7 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /*package*/ final class PushHandler implements HttpHandler {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final PushSender pushSender = PushSender.create();
-    private final AtomicInteger idSeq = new AtomicInteger();
 
     public void start() {
         pushSender.start();
@@ -56,15 +58,21 @@ import java.util.concurrent.atomic.AtomicInteger;
         pushSender.stop();
     }
 
+    /**
+     * 处理推送请求
+     * @param httpExchange
+     * @throws IOException
+     */
     @SuppressWarnings("unchecked")
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         String body = new String(readBody(httpExchange), Constants.UTF_8);
         Map<String, Object> params = Jsons.fromJson(body, Map.class);
 
-        sendPush(params);
+        boolean isOk = sendPush(params);
 
-        byte[] data = "服务已经开始推送,请注意查收消息".getBytes(Constants.UTF_8);
+        byte[] data = isOk ? "服务已经开始推送,请注意查收消息".getBytes(Constants.UTF_8)
+                : "userId、alias、tags三者必须有且只能有一种，多个用英文逗号分隔".getBytes(Constants.UTF_8) ;
         httpExchange.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
         httpExchange.sendResponseHeaders(200, data.length);//200, content-length
         OutputStream out = httpExchange.getResponseBody();
@@ -73,24 +81,58 @@ import java.util.concurrent.atomic.AtomicInteger;
         httpExchange.close();
     }
 
-    private void sendPush(Map<String, Object> params) {
-        String userId = (String) params.get("userId");
-        String hello = (String) params.get("hello");
+    private boolean sendPush(Map<String, Object> params) {
+        String userId = params.containsKey("userId") ? (String) params.get("userId") : null;
+        String alias = params.containsKey("alias") ? (String) params.get("alias") : null;
+        String tags = params.containsKey("tags") ? (String) params.get("tags") : null;
+
+        int d = 0;
+        if(userId != null){
+            d++;
+        }
+        if(alias != null){
+            d++;
+        }
+        if(tags != null){
+            d++;
+        }
+        if(d != 1){
+            return false;
+        }
+
+        String title = (String) params.get("title");
+        String content = (String) params.get("content");
         Boolean broadcast = (Boolean) params.get("broadcast");
         String condition = (String) params.get("condition");
+        String ticker = params.containsKey("ticker") ? (String) params.get("ticker") : title;
 
+        Map<String, String> extras = params.containsKey("extras") ? (Map<String, String>) params.get("extras") : null;
 
-        NotificationDO notificationDO = new NotificationDO();
-        notificationDO.content = "MPush开源推送，" + hello;
-        notificationDO.title = "MPUSH推送";
-        notificationDO.nid = idSeq.get() % 2 + 1;
-        notificationDO.ticker = "你有一条新的消息,请注意查收";
-        PushMsg pushMsg = PushMsg.build(MsgType.NOTIFICATION_AND_MESSAGE, Jsons.toJson(notificationDO));
-        pushMsg.setMsgId("msg_" + idSeq.incrementAndGet());
+        MsgType msgType = params.containsKey("msgType") ? MsgType.getMsgType((int) params.get("msgType")) : MsgType.NOTIFICATION_AND_MESSAGE;
+        if(msgType == null){
+            msgType = MsgType.NOTIFICATION_AND_MESSAGE;
+        }
 
-        pushSender.send(PushContext
+        Set<String> tagsSet = tags!=null? SetUtil.toSet(tags.split(",")) : null;
+        Set<String> aliasSet = alias!=null ? SetUtil.toSet(alias.split(",")) : null;
+        Set<String> userIdSet = null;
+        if(userId!=null && userId.indexOf(",")>0){
+            userIdSet = SetUtil.toSet(userId.split(","));
+        }
+
+        Notification notification = new Notification();
+        notification.content = content;
+        notification.title = title;
+        notification.ticker = ticker;
+        PushMsg pushMsg = PushMsg.build(msgType, Jsons.toJson(notification));
+
+        PushContext context = PushContext
                 .build(pushMsg)
-                .setUserId(Strings.isBlank(userId) ? null : userId)
+                .setUserId(userIdSet!=null ? null : Strings.isBlank(userId) ? null : userId)
+                .setUserIds(userIdSet)
+                .setAliasSet(aliasSet)
+                .setTags(tagsSet)
+                .setExtras(extras)
                 .setBroadcast(broadcast != null && broadcast)
                 .setCondition(Strings.isBlank(condition) ? null : condition)
                 .setCallback(new PushCallback() {
@@ -98,8 +140,20 @@ import java.util.concurrent.atomic.AtomicInteger;
                     public void onResult(PushResult result) {
                         logger.info(result.toString());
                     }
-                })
-        );
+                });
+
+        if(context.getUserIds() != null ){
+            pushSender.sendByUserIds(context);
+        } else if(context.getUserId() != null ){
+            pushSender.sendByUserId(context);
+        } else if(context.getAliasSet() != null ){
+            pushSender.sendByAlias(context);
+        } else if(context.getTags() != null ){
+            pushSender.sendByTags(context);
+        } else {
+            return false;
+        }
+        return true;
     }
 
     private byte[] readBody(HttpExchange httpExchange) throws IOException {
@@ -120,17 +174,5 @@ import java.util.concurrent.atomic.AtomicInteger;
             in.close();
             return out.toByteArray();
         }
-    }
-
-    public static final class NotificationDO {
-        public String msgId; // 推送消息id
-        public String title; // 标题 必填
-        public String content; // 内容 必填
-        public Integer nid; //主要用于聚合通知，非必填
-        public Byte flags; //特性字段。 0x01:声音  0x02:震动  0x03:闪灯
-        public String largeIcon; // 大图标
-        public String ticker; //和title一样
-        public Integer number;
-        public Map<String, String> extras; // 扩展
     }
 }
