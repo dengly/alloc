@@ -1,8 +1,5 @@
 package com.shinemo.mpush.alloc;
 
-
-import java.io.IOException;
-
 /**
  * Created by ohun on 16/10/14.
  *
